@@ -1,0 +1,97 @@
+{% load static %}<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Inventario{% endblock %} · Tienda</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="{% static 'inventario/app.css' %}" rel="stylesheet">
+</head>
+<body>
+{% with n=request.resolver_match.url_name %}
+<aside class="sidebar" id="sidebar">
+  <div class="sb-profile">
+    <div class="avatar">{{ user.get_username|first|upper }}</div>
+    <div class="sb-name">{{ user.get_full_name|default:user.get_username }}</div>
+    <div class="sb-role">{% if user.is_staff %}Administrador{% else %}Usuario{% endif %}</div>
+  </div>
+
+  <div class="sb-group">
+    <div class="sb-label">Principal</div>
+    <a class="nav-i {% if n == 'resumen' %}active{% endif %}" href="{% url 'resumen' %}"><i class="bi bi-speedometer2"></i> Resumen</a>
+    <a class="nav-i {% if n == 'producto_lista' %}active{% endif %}" href="{% url 'producto_lista' %}"><i class="bi bi-box-seam"></i> Productos</a>
+    <a class="nav-i {% if n == 'venta_lista' or n == 'venta_detalle' %}active{% endif %}" href="{% url 'venta_lista' %}"><i class="bi bi-receipt"></i> Ventas</a>
+    <a class="nav-i {% if n == 'producto_nuevo' or n == 'producto_editar' %}active{% endif %}" href="{% url 'producto_nuevo' %}"><i class="bi bi-plus-square"></i> Nuevo producto</a>
+  </div>
+
+  {% if user.is_staff %}
+  <div class="sb-group">
+    <div class="sb-label">Admin</div>
+    <a class="nav-i" href="{% url 'admin:auth_user_changelist' %}"><i class="bi bi-people"></i> Usuarios</a>
+    <a class="nav-i" href="{% url 'admin:inventario_categoria_changelist' %}"><i class="bi bi-tags"></i> Categorías</a>
+    <a class="nav-i" href="{% url 'admin:index' %}"><i class="bi bi-gear"></i> Panel admin</a>
+  </div>
+  {% endif %}
+
+  <div class="sb-bottom">
+    <form method="post" action="{% url 'logout' %}">
+      {% csrf_token %}
+      <button class="nav-i" type="submit"><i class="bi bi-box-arrow-left"></i> Salir</button>
+    </form>
+  </div>
+</aside>
+<div class="nav-backdrop" id="nav-backdrop"></div>
+
+<div class="main">
+  <header class="topbar">
+    <button class="tb-toggle" id="nav-toggle" type="button" aria-label="Menú"><i class="bi bi-text-indent-left"></i></button>
+    <form class="tb-search" action="{% url 'producto_lista' %}" method="get" role="search">
+      <i class="bi bi-search"></i>
+      <input type="search" name="q" value="{{ request.GET.q }}" placeholder="Buscar un producto, código o descripción">
+    </form>
+    <a class="tb-btn primary" href="{% url 'producto_nuevo' %}" title="Nuevo producto"><i class="bi bi-plus-lg"></i></a>
+    <a class="tb-btn" href="{% url 'venta_lista' %}" title="Ventas"><i class="bi bi-receipt"></i></a>
+    <a class="tb-btn" href="{% url 'resumen' %}" title="Resumen"><i class="bi bi-grid-3x3-gap"></i></a>
+  </header>
+
+  <div class="page-head">
+    <div class="ph-top">
+      <div>
+        <h1>{% block heading %}Inventario{% endblock %}</h1>
+        <div class="ph-sub">{% block subheading %}{% endblock %}</div>
+      </div>
+      <div class="ph-actions">{% block actions %}{% endblock %}</div>
+    </div>
+    <nav class="ph-tabs">
+      <a class="{% if n == 'resumen' %}active{% endif %}" href="{% url 'resumen' %}">Resumen</a>
+      <a class="{% if n == 'producto_lista' %}active{% endif %}" href="{% url 'producto_lista' %}">Productos</a>
+      <a class="{% if n == 'venta_lista' %}active{% endif %}" href="{% url 'venta_lista' %}">Ventas</a>
+    </nav>
+  </div>
+
+  <main class="content">
+    {% for m in messages %}
+      <div class="alert alert-{% if m.level_tag == 'error' %}danger{% else %}{{ m.level_tag }}{% endif %} alert-dismissible fade show">
+        {{ m }}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+      </div>
+    {% endfor %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+{% block extra %}{% endblock %}
+{% endwith %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  document.getElementById("nav-toggle").addEventListener("click", function () {
+    var desktop = window.matchMedia("(min-width: 992px)").matches;
+    document.body.classList.toggle(desktop ? "nav-collapsed" : "nav-open");
+  });
+  document.getElementById("nav-backdrop").addEventListener("click", function () {
+    document.body.classList.remove("nav-open");
+  });
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

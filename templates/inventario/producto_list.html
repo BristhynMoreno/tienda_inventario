@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% load l10n %}
+{% block title %}Productos{% endblock %}
+{% block heading %}Productos{% endblock %}
+{% block subheading %}
+  <i class="bi bi-box-seam"></i>
+  {{ paginator.count }} producto{{ paginator.count|pluralize }}{% if not todos %} en stock{% endif %}{% if q %} · búsqueda: «{{ q }}»{% endif %}
+{% endblock %}
+{% block actions %}
+  {% if todos %}
+    <a class="pill" href="?{% if q %}q={{ q|urlencode }}{% endif %}"><span class="dot" style="background:#b3bdcb"></span> Todos</a>
+  {% else %}
+    <a class="pill" href="?todos=1{% if q %}&q={{ q|urlencode }}{% endif %}"><span class="dot"></span> En stock</a>
+  {% endif %}
+  <a class="pill pill-blue" href="{% url 'producto_nuevo' %}"><i class="bi bi-plus-lg"></i> Nuevo producto</a>
+{% endblock %}
+
+{% block content %}
+<div class="pgrid">
+  {% for p in productos %}
+  <article class="pcard {% if not p.activo or p.stock == 0 %}is-out{% endif %}">
+    <div class="pthumb">
+      {% if p.imagen %}<img src="{{ p.imagen.url }}" alt="{{ p.nombre }}" loading="lazy">{% else %}<i class="bi bi-box-seam"></i>{% endif %}
+    </div>
+    <div class="pbody">
+      <h2 class="pname" title="{{ p.nombre }}">{{ p.nombre }}</h2>
+      <p class="pdesc" title="{{ p.descripcion }}">{{ p.descripcion|default:"Sin descripción" }}</p>
+      <div class="pmeta">
+        <span class="pprice">$ {{ p.precio|floatformat:"-2g" }}</span>
+        <span class="pstock">{{ p.stock }} en stock{% if p.categoria %} · {{ p.categoria }}{% endif %}</span>
+      </div>
+    </div>
+    <div class="pact">
+      {% if p.activo and p.stock > 0 %}
+        <button type="button" class="pill-add js-add" data-id="{{ p.pk }}" data-nombre="{{ p.nombre }}"
+                data-precio="{{ p.precio|unlocalize }}" data-stock="{{ p.stock }}"
+                aria-label="Agregar {{ p.nombre }} al carrito"><i class="bi bi-bag-plus"></i></button>
+      {% else %}
+        <span class="pill-add disabled">{% if not p.activo %}Inactivo{% else %}Agotado{% endif %}</span>
+      {% endif %}
+      <a class="p-edit" href="{% url 'producto_editar' p.pk %}" title="Editar"><i class="bi bi-pencil"></i></a>
+    </div>
+  </article>
+  {% empty %}
+  <div class="panel text-center muted" style="grid-column:1/-1">No hay productos para mostrar.</div>
+  {% endfor %}
+</div>
+
+{% if is_paginated %}
+<nav class="mt-4"><ul class="pagination">
+  {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q|urlencode }}{% endif %}{% if todos %}&todos=1{% endif %}">Anterior</a></li>{% endif %}
+  <li class="page-item disabled"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+  {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q|urlencode }}{% endif %}{% if todos %}&todos=1{% endif %}">Siguiente</a></li>{% endif %}
+</ul></nav>
+{% endif %}
+{% endblock %}
+
+{% block extra %}
+<div id="cart-root" data-checkout-url="{% url 'venta_checkout' %}" data-csrf="{{ csrf_token }}" data-user="{{ user.pk }}">
+  <button id="cart-fab" class="fab" type="button" data-bs-toggle="offcanvas" data-bs-target="#cartPanel"
+          aria-controls="cartPanel" aria-label="Abrir carrito de venta">
+    <i class="bi bi-cart3"></i><span id="cart-count" class="fab-badge" hidden>0</span>
+  </button>
+
+  <div class="offcanvas offcanvas-end" tabindex="-1" id="cartPanel" aria-labelledby="cartTitle">
+    <div class="offcanvas-header">
+      <h2 class="offcanvas-title h5" id="cartTitle"><i class="bi bi-cart3"></i> Carrito de venta</h2>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
+    </div>
+    <div class="offcanvas-body d-flex flex-column">
+      <p id="cart-empty" class="cart-empty">Aún no has agregado productos.<br>Usa el botón <i class="bi bi-bag-plus"></i> de cada tarjeta.</p>
+      <ul id="cart-items" class="cart-items"></ul>
+      <div class="cart-foot mt-auto">
+        <label class="form-label small" for="cart-cliente">Cliente (opcional)</label>
+        <input id="cart-cliente" class="form-control" maxlength="150" placeholder="Nombre del cliente">
+        <div class="cart-total-row"><span>Total</span><strong id="cart-total">$ 0</strong></div>
+        <div id="cart-error" class="alert alert-danger py-2 small" hidden></div>
+        <div class="d-flex gap-2">
+          <button id="cart-clear" type="button" class="btn btn-outline-secondary">Vaciar</button>
+          <button id="cart-confirm" type="button" class="btn btn-success flex-grow-1"><i class="bi bi-check2-circle"></i> Confirmar venta</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="mini-toast" class="mini-toast" role="status" aria-live="polite"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}{% load static %}<script src="{% static 'inventario/cart.js' %}"></script>{% endblock %}

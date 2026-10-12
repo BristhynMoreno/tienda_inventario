@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Resumen{% endblock %}
+{% block heading %}Resumen de la tienda{% endblock %}
+{% block subheading %}<i class="bi bi-calendar3"></i> Ventas de los últimos 12 meses e inventario actual{% endblock %}
+{% block actions %}<a class="pill pill-blue" href="{% url 'producto_lista' %}"><i class="bi bi-cart3"></i> Vender</a>{% endblock %}
+
+{% block content %}
+<div class="dash-grid">
+  <section>
+    <div class="gauges">
+      {% for g in gauges %}
+      <div class="gauge-box">
+        <div class="gauge-wrap">
+          <svg viewBox="0 0 160 160" aria-hidden="true">
+            <circle class="g-track" cx="80" cy="80" r="70" pathLength="100"></circle>
+            <circle class="g-bar g-{{ g.color }}" cx="80" cy="80" r="70" pathLength="100"
+                    stroke-dasharray="100" stroke-dashoffset="{{ g.offset }}" transform="rotate(-90 80 80)"></circle>
+          </svg>
+          <div class="gauge-txt"><strong>{{ g.value }}</strong><span>{{ g.label }}</span></div>
+        </div>
+        <div class="gauge-hint">{{ g.hint }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="caption-pill"><span class="pill">Mes actual · inventario activo</span></div>
+  </section>
+
+  <section>
+    {% if hay_ventas %}
+    <div class="chart">
+      <div class="chart-head"><span>Ventas por mes</span><span>Máx. $ {{ max_total|floatformat:"-2g" }}</span></div>
+      <div class="bars">
+        {% for s in serie %}
+        <div class="bar {% if forloop.last %}is-current{% endif %}"
+             data-tip="{{ s.etiqueta }} {{ s.anio }} · $ {{ s.total|floatformat:'-2g' }} · {{ s.n }} venta{{ s.n|pluralize }}">
+          <i style="height: {{ s.pct }}%"></i>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="bar-labels">{% for s in serie %}<span>{{ s.etiqueta }}</span>{% endfor %}</div>
+    </div>
+    {% else %}
+    <div class="no-data">Aún no hay ventas registradas.</div>
+    {% endif %}
+    <div class="caption-pill"><span class="pill">Ventas / mes</span></div>
+  </section>
+</div>
+
+<div class="kpis">
+  <div class="kpi">
+    <div class="kpi-label">Promedio de ventas mensual</div>
+    <div class="kpi-value">$ {{ prom_total|floatformat:"-2g" }}</div>
+    <div class="kpi-sub">
+      {% if meses_base %}
+        Promedio de {{ meses_base }} mes{{ meses_base|pluralize:",es" }} completo{{ meses_base|pluralize }} · ≈ {{ prom_n|floatformat:"0g" }} venta{{ prom_n|floatformat:"0"|pluralize }} por mes
+      {% elif hay_ventas %}
+        Aún no hay meses completos: se muestra el mes en curso.
+      {% else %}
+        Sin ventas registradas.
+      {% endif %}
+    </div>
+  </div>
+  <div class="kpi k-blue">
+    <div class="kpi-label">Ventas del mes actual</div>
+    <div class="kpi-value">$ {{ actual.total|floatformat:"-2g" }}</div>
+    <div class="kpi-sub">
+      {{ actual.n }} venta{{ actual.n|pluralize }}
+      {% if variacion is not None %}
+        · <span class="{% if variacion >= 0 %}up{% else %}down{% endif %}">{% if variacion >= 0 %}▲ +{% else %}▼ {% endif %}{{ variacion }}%</span> vs. promedio
+      {% endif %}
+    </div>
+  </div>
+  <div class="kpi k-purple">
+    <div class="kpi-label">Valor del inventario</div>
+    <div class="kpi-value">$ {{ valor_inventario|floatformat:"-2g" }}</div>
+    <div class="kpi-sub">Precio × stock de los productos activos</div>
+  </div>
+</div>
+{% endblock %}

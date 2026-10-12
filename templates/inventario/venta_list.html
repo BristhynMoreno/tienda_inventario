@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Ventas{% endblock %}
+{% block heading %}Registro de ventas{% endblock %}
+{% block subheading %}<i class="bi bi-receipt"></i> Las {{ limite }} ventas más recientes{% if desde or hasta %} del rango seleccionado{% endif %}{% endblock %}
+{% block actions %}
+  <a class="pill pill-blue" href="{% url 'producto_lista' %}"><i class="bi bi-cart3"></i> Vender</a>
+{% endblock %}
+
+{% block content %}
+<form method="get" class="panel filter-bar">
+  <div class="fb-field">
+    <label for="desde">Desde</label>
+    <input type="date" id="desde" name="desde" value="{{ desde }}" class="form-control">
+  </div>
+  <div class="fb-field">
+    <label for="hasta">Hasta</label>
+    <input type="date" id="hasta" name="hasta" value="{{ hasta }}" class="form-control">
+  </div>
+  <button class="pill pill-blue" type="submit"><i class="bi bi-search"></i> Buscar</button>
+  {% if desde or hasta %}<a class="pill" href="{% url 'venta_lista' %}">Limpiar</a>{% endif %}
+  <div class="fb-summary ms-auto">
+    <span class="pill">{{ cantidad }} venta{{ cantidad|pluralize }}</span>
+    <span class="pill">Total $ {{ suma|floatformat:"-2g" }}</span>
+  </div>
+</form>
+
+<div class="panel p-0">
+  <div class="table-responsive">
+    <table class="tbl">
+      <thead><tr><th>#</th><th>Fecha</th><th>Vendedor</th><th>Cliente</th><th class="text-end">Total</th><th></th></tr></thead>
+      <tbody>
+      {% for v in ventas %}
+        <tr>
+          <td><a href="{% url 'venta_detalle' v.pk %}">{{ v.pk }}</a></td>
+          <td>{{ v.fecha|date:"d/m/Y H:i" }}</td>
+          <td>{{ v.vendedor.username }}</td>
+          <td>{{ v.cliente|default:"—" }}</td>
+          <td class="text-end fw-semibold">$ {{ v.total|floatformat:"-2g" }}</td>
+          <td class="text-end"><a href="{% url 'venta_detalle' v.pk %}" title="Ver detalle"><i class="bi bi-eye"></i></a></td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6" class="text-center muted py-5">No hay ventas para este rango.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<p class="muted small mt-3">
+  Mostrando {{ ventas|length }} de {{ cantidad }} venta{{ cantidad|pluralize }}.
+  {% if hay_mas %}Ajusta el rango de fechas para ver ventas anteriores.{% endif %}
+</p>
+{% endblock %}
